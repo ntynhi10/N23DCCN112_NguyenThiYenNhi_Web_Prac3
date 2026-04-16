@@ -9,6 +9,10 @@ export default function ProductsPage() {
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
 
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editPrice, setEditPrice] = useState('');
+
   const fetchProducts = async () => {
     const res = await api.get('/api/products');
     setProducts(res.data);
@@ -47,6 +51,7 @@ export default function ProductsPage() {
     console.error(err.response?.data?.error);
   }
 };
+
 const handleDelete = async (id: number) => {
   if (!confirm('Bạn chắc chắn muốn xoá?')) return;
 
@@ -64,41 +69,102 @@ const handleDelete = async (id: number) => {
   }
 };
 
+const handleEdit = (p: any) => {
+    setEditingId(p.id);
+    setEditName(p.name);
+    setEditPrice(String(p.price));
+  };
+
+  const handleUpdate = async (id: number) => {
+    try {
+      await api.put(`/api/products/${id}`, {
+        name: editName,
+        price: Number(editPrice),
+      });
+
+      toast.success('Cập nhật thành công');
+      setEditingId(null);
+      fetchProducts();
+    } catch {
+      toast.error('Cập nhật thất bại');
+    }
+  };
+
   return (
     <div>
       <form onSubmit={handleSubmit}>
         <input
           value={name}
           onChange={e => setName(e.target.value)}
-          placeholder='Tên SP'
+          placeholder="Tên SP"
         />
         <input
           value={price}
           onChange={e => setPrice(e.target.value)}
-          placeholder='Giá'
-          type='number'
+          placeholder="Giá"
+          type="number"
         />
-        <button type='submit'>Thêm sản phẩm</button>
+        <button type="submit">Thêm sản phẩm</button>
       </form>
 
       {products.map((p: any) => (
         <div
-            key={p.id}
-            className="flex justify-between items-center p-3 border rounded mb-2"
+          key={p.id}
+          className="flex justify-between items-center p-3 border rounded mb-2"
         >
-            <span>
-            {p.name} — {Number(p.price).toLocaleString()}đ
-            </span>
+          {editingId === p.id ? (
+            <div className="flex gap-2 items-center">
+              <input
+                value={editName}
+                onChange={e => setEditName(e.target.value)}
+                className="border px-2"
+              />
+              <input
+                value={editPrice}
+                onChange={e => setEditPrice(e.target.value)}
+                type="number"
+                className="border px-2 w-24"
+              />
 
-            <button
-            onClick={() => handleDelete(p.id)}
-            className="text-red-500 hover:text-red-700 text-sm font-medium"
-            >
-            Xoá
-            </button>
+              <button
+                onClick={() => handleUpdate(p.id)}
+                className="bg-green-500 text-white px-2"
+              >
+                Lưu
+              </button>
+
+              <button
+                onClick={() => setEditingId(null)}
+                className="text-gray-500"
+              >
+                Huỷ
+              </button>
+            </div>
+          ) : (
+            <>
+              <span>
+                {p.name} — {Number(p.price).toLocaleString()}đ
+              </span>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleDelete(p.id)}
+                  className="text-red-500 hover:text-red-700 text-sm font-medium"
+                >
+                  Xoá
+                </button>
+
+                <button
+                  onClick={() => handleEdit(p)}
+                  className="text-blue-500 text-sm"
+                >
+                  Sửa
+                </button>
+              </div>
+            </>
+          )}
         </div>
-        ))}
+      ))}
     </div>
   );
-  
 }
