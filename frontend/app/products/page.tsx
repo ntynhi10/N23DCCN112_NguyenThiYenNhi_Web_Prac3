@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import api from '@/lib/api';
+import toast from 'react-hot-toast';
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<any[]>([]);
@@ -18,22 +19,34 @@ export default function ProductsPage() {
   }, []);
 
   const handleSubmit = async (e: any) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    try {
-      await api.post('/api/products', {
+  if (!name || !price) {
+    toast.error('Vui lòng nhập đầy đủ thông tin!');
+    return;
+  }
+
+  try {
+    await toast.promise(
+      api.post('/api/products', {
         name,
-        price: Number(price) 
-      });
+        price: Number(price)
+      }),
+      {
+        loading: 'Đang lưu...',
+        success: 'Thêm sản phẩm thành công!',
+        error: 'Có lỗi xảy ra!'
+      }
+    );
 
-      setName('');
-      setPrice('');
-      fetchProducts();
+    setName('');
+    setPrice('');
+    fetchProducts();
 
-    } catch (err: any) {
-      console.error(err.response?.data?.error);
-    }
-  };
+  } catch (err: any) {
+    console.error(err.response?.data?.error);
+  }
+};
 
   return (
     <div>
@@ -59,4 +72,5 @@ export default function ProductsPage() {
       ))}
     </div>
   );
+  
 }
