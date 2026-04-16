@@ -47,3 +47,12 @@ app.post('/api/products', (req, res) => {
 app.listen(5000, () =>
   console.log('Backend chạy tại port :5000')
 );
+
+app.delete('/api/products/:id', (req, res) => {
+const id = Number(req.params.id);
+const index = products.findIndex(p => p.id === id);
+if (index === -1)
+return res.status(404).json({ error: 'Không tìm thấy sản phẩm' });
+products.splice(index, 1);
+res.json({ message: 'Đã xoá thành công' });
+});

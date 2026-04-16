@@ -47,6 +47,22 @@ export default function ProductsPage() {
     console.error(err.response?.data?.error);
   }
 };
+const handleDelete = async (id: number) => {
+  if (!confirm('Bạn chắc chắn muốn xoá?')) return;
+
+  try {
+    await api.delete(`/api/products/${id}`);
+
+    // optimistic update
+    setProducts(prev => prev.filter(p => p.id !== id));
+
+    toast.success('Đã xoá sản phẩm');
+
+  } catch (err) {
+    toast.error('Xoá thất bại, thử lại!');
+    fetchProducts(); // rollback
+  }
+};
 
   return (
     <div>
@@ -66,10 +82,22 @@ export default function ProductsPage() {
       </form>
 
       {products.map((p: any) => (
-        <div key={p.id}>
-          {p.name} — {Number(p.price).toLocaleString()}đ
+        <div
+            key={p.id}
+            className="flex justify-between items-center p-3 border rounded mb-2"
+        >
+            <span>
+            {p.name} — {Number(p.price).toLocaleString()}đ
+            </span>
+
+            <button
+            onClick={() => handleDelete(p.id)}
+            className="text-red-500 hover:text-red-700 text-sm font-medium"
+            >
+            Xoá
+            </button>
         </div>
-      ))}
+        ))}
     </div>
   );
   
