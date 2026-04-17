@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import Link from 'next/link';
 
 export default function ProductsPage() {
   /* const [products, setProducts] = useState<any[]>([]); */
@@ -27,6 +28,11 @@ export default function ProductsPage() {
     queryFn: () => api.get('/api/products').then(r => r.data)
   });
 
+  const { data: cart = [] } = useQuery({
+    queryKey: ['cart'],
+    queryFn: () => api.get('/api/cart').then(r => r.data)
+  });
+  
   const handleSubmit = async (e: any) => {
   e.preventDefault();
 
@@ -98,8 +104,34 @@ const handleEdit = (p: any) => {
     }
   };
 
+const addToCart = useMutation({
+  mutationFn: (data: { productId: number; quantity: number }) =>
+    api.post('/api/cart', data),
+
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ['cart'] });
+    toast.success('Đã thêm vào giỏ');
+  },
+
+  onError: (err: any) => {
+    console.log(err);
+    toast.error('Lỗi thêm giỏ hàng');
+  }
+});
+
   return (
+    
     <div>
+      <div className="flex justify-end mt-8">
+        <Link href="/cart">
+          <button className="relative text-green-500 cursor-pointer">
+            🛒 Xem giỏ hàng
+            <span className="absolute -top-2 -left-2 bg-red-500 text-white text-xs px-1 rounded">
+              {cart.length}
+            </span>
+          </button>
+        </Link>
+      </div>
       <form onSubmit={handleSubmit}>
         <input
           value={name}
@@ -167,6 +199,16 @@ const handleEdit = (p: any) => {
                   className="text-blue-500 text-sm"
                 >
                   Sửa
+                </button>
+                <button
+                  onClick={() =>
+                    addToCart.mutate({
+                      productId: p.id,
+                      quantity: 1
+                    })
+                  }
+                >
+                  Thêm vào giỏ
                 </button>
               </div>
             </>

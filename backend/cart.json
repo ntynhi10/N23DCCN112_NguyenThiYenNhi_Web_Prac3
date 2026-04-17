@@ -1,0 +1,14 @@
+[
+  {
+    "productId": 1,
+    "quantity": 1,
+    "price": 150000,
+    "name": "Áo thun basic"
+  },
+  {
+    "productId": 1776415163004,
+    "quantity": 1,
+    "price": 580000,
+    "name": "Quần"
+  }
+]
