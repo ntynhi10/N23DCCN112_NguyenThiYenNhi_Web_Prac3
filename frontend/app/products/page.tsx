@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 export default function ProductsPage() {
-  const [products, setProducts] = useState<any[]>([]);
+  /* const [products, setProducts] = useState<any[]>([]); */
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
 
@@ -13,14 +14,18 @@ export default function ProductsPage() {
   const [editName, setEditName] = useState('');
   const [editPrice, setEditPrice] = useState('');
 
-  const fetchProducts = async () => {
+  /* const fetchProducts = async () => {
     const res = await api.get('/api/products');
     setProducts(res.data);
-  };
+  }; */
 
-  useEffect(() => {
+  /* useEffect(() => {
     fetchProducts();
-  }, []);
+  }, []); */
+  const { data: products = [], isLoading } = useQuery({
+    queryKey: ['products'],
+    queryFn: () => api.get('/api/products').then(r => r.data)
+  });
 
   const handleSubmit = async (e: any) => {
   e.preventDefault();
@@ -45,28 +50,30 @@ export default function ProductsPage() {
 
     setName('');
     setPrice('');
-    fetchProducts();
+    /* fetchProducts(); */
+    queryClient.invalidateQueries({ queryKey: ['products'] });
 
   } catch (err: any) {
     console.error(err.response?.data?.error);
   }
 };
 
-const handleDelete = async (id: number) => {
-  if (!confirm('Bạn chắc chắn muốn xoá?')) return;
+const queryClient = useQueryClient();
 
-  try {
-    await api.delete(`/api/products/${id}`);
+const deleteMutation = useMutation({
+  mutationFn: (id: number) => api.delete(`/api/products/${id}`),
 
-    // optimistic update
-    setProducts(prev => prev.filter(p => p.id !== id));
-
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ['products'] });
     toast.success('Đã xoá sản phẩm');
+  },
 
-  } catch (err) {
-    toast.error('Xoá thất bại, thử lại!');
-    fetchProducts(); // rollback
-  }
+  onError: () => toast.error('Xoá thất bại!'),
+});
+
+const handleDelete = (id: number) => {
+  if (!confirm('Bạn chắc chắn muốn xoá?')) return;
+  deleteMutation.mutate(id);
 };
 
 const handleEdit = (p: any) => {
@@ -84,7 +91,8 @@ const handleEdit = (p: any) => {
 
       toast.success('Cập nhật thành công');
       setEditingId(null);
-      fetchProducts();
+      /* fetchProducts(); */
+      queryClient.invalidateQueries({ queryKey: ['products'] });
     } catch {
       toast.error('Cập nhật thất bại');
     }
